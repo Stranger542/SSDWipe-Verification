@@ -3,51 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSD Wipe Certificate Verifier</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>SSD Certificate Verifier</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; }
-        .card { background-color: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); }
-        .btn-primary { background-color: #1d4ed8; transition: background-color 0.2s; }
-        .btn-primary:hover:not(:disabled) { background-color: #1e40af; }
-        .btn-primary:disabled { background-color: #60a5fa; cursor: not-allowed; }
-        .loader { border-top-color: #3498db; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
+<body>
 
-    <div class="card w-full max-w-2xl p-8 md:p-10">
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">SSD Wipe Certificate Verifier</h1>
-            <p class="text-gray-500 mt-2">Enter a device serial number to verify its data destruction certificate.</p>
+    <div class="verifier-card">
+
+        <div class="card-header">
+            <svg class="shield-icon" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <h1>Certificate Verifier</h1>
+            <p>Check for a valid data destruction certificate on the blockchain.</p>
         </div>
 
-        <div class="flex flex-col sm:flex-row gap-4 mb-6">
-            <input type="text" id="serialNumberInput" placeholder="Enter device serial number" class="flex-grow w-full px-4 py-3 text-lg border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
-            <button id="verifyBtn" class="btn-primary text-white font-bold text-lg px-8 py-3 rounded-lg w-full sm:w-auto flex items-center justify-center">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0-2 2c0 1.05.77 2 2 2s2-.95 2-2c0-1.05-.77-2-2-2Z"/></svg>
-    Verify
-</button>
+        <div class="verify-form">
+            <input type="text" id="serialNumberInput" placeholder="Enter device serial number...">
+            <button id="verifyBtn">Verify</button>
         </div>
 
-        <div id="resultArea" class="mt-8">
-            <div id="initialState" class="text-center text-gray-400 py-10"><p>Verification results will appear here.</p></div>
-            <div id="loadingState" class="hidden text-center py-10">
-    <!-- ... (loader div) ... -->
-    <p class="text-lg font-medium text-gray-600">Querying the blockchain... Please wait.</p>
-</div>
-            <div id="notFoundState" class="hidden text-center py-10"><h3 class="text-2xl font-bold text-red-600">Certificate Not Found</h3><p class="text-gray-500 mt-2">No record was found for this serial number.</p></div>
+        <div class="results-wrapper" id="resultArea">
+            <div id="initialState" class="result-message">
+                <p>Results will be displayed here.</p>
+            </div>
+            
+            <div id="loadingState" class="result-message hidden">
+                <div class="loader"></div>
+                <p>Querying the blockchain...</p>
+            </div>
+
+            <div id="notFoundState" class="result-message hidden">
+                <h3 class="error-title">Record Not Found</h3>
+                <p>This serial number does not have a verified certificate.</p>
+            </div>
+            
             <div id="successState" class="hidden">
-               <div class="bg-green-100 border-l-4 border-green-500 text-green-800 p-4 rounded-md mb-6 flex items-center">
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-3 h-6 w-6"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-    <h3 class="text-xl font-bold">Proof of Authentication: Verified</h3>
-</div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-gray-700"><div class="bg-gray-50 p-4 rounded-lg"><label class="block text-sm font-semibold text-gray-500">Device Serial Number</label><p id="cert-serial" class="text-lg font-medium text-gray-900">-</p></div><div class="bg-gray-50 p-4 rounded-lg"><label class="block text-sm font-semibold text-gray-500">Device Model</label><p id="cert-model" class="text-lg font-medium text-gray-900">-</p></div><div class="bg-gray-50 p-4 rounded-lg"><label class="block text-sm font-semibold text-gray-500">Wipe Method</label><p id="cert-wipe-method" class="text-lg font-medium text-gray-900">-</p></div><div class="bg-gray-50 p-4 rounded-lg"><label class="block text-sm font-semibold text-gray-500">Verified On (Timestamp)</label><p id="cert-timestamp" class="text-lg font-medium text-gray-900">-</p></div></div></div>
+                <div class="verified-banner">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <h3>Certificate Verified</h3>
+                </div>
+                <div class="details-grid">
+                    <div class="result-item"><label>Device Serial Number</label><p id="cert-serial">-</p></div>
+                    <div class="result-item"><label>Device Model</label><p id="cert-model">-</p></div>
+                    <div class="result-item"><label>Wipe Method</label><p id="cert-wipe-method">-</p></div>
+                    <div class="result-item"><label>Verified On (Timestamp)</label><p id="cert-timestamp">-</p></div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <script src="./script.js"></script>
+    <script src="script.js"></script>
+
 </body>
 </html>
